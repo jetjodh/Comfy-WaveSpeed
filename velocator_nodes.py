@@ -31,9 +31,11 @@ class VelocatorQuantizeModel:
                     "default": "fnmatch_matches_fqn",
                 }),
                 "filter_fn_kwargs": ("STRING", {
+                    "multiline": True,
                     "default": '{"pattern": ["*"]}',
                 }),
                 "kwargs": ("STRING", {
+                    "multiline": True,
                     "default": "{}",
                 }),
             }
@@ -91,9 +93,11 @@ class VelocatorCompileModel:
                 }),
                 "dynamic": (["None", "True", "False"],),
                 "mode": ("STRING", {
+                    "multiline": True,
                     "default": "cache-all:max-autotune:low-precision",
                 }),
                 "options": ("STRING", {
+                    "multiline": True,
                     "default": "{}",
                 }),
                 "disable": ("BOOLEAN", {
