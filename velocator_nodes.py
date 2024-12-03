@@ -49,7 +49,7 @@ class VelocatorQuantizeModel:
                     "STRING",
                     {
                         "multiline": True,
-                        "default": "{}",
+                        # "default": "{}",
                     },
                 ),
             }
@@ -72,8 +72,8 @@ class VelocatorQuantizeModel:
             [model], force_patch_weights=True, force_full_load=True
         )
 
-        filter_fn_kwargs = json.loads(filter_fn_kwargs)
-        kwargs = json.loads(kwargs)
+        filter_fn_kwargs = json.loads(filter_fn_kwargs) if filter_fn_kwargs else {}
+        kwargs = json.loads(kwargs) if kwargs else {}
 
         model = model.clone()
         model.add_object_patch(
@@ -124,7 +124,7 @@ class VelocatorCompileModel:
                     "STRING",
                     {
                         "multiline": True,
-                        "default": "{}",
+                        # "default": "{}",
                     },
                 ),
                 "disable": (
@@ -167,7 +167,7 @@ class VelocatorCompileModel:
         memory_format = getattr(torch, memory_format)
 
         dynamic = eval(dynamic)
-        options = json.loads(options)
+        options = json.loads(options) if options else {}
         if backend == "velocator":
             backend = "xelerate"
 
