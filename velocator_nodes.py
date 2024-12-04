@@ -63,7 +63,7 @@ class VelocatorLoadAndQuantizeDiffusionModel:
                 "lowvram": ("BOOLEAN", {"default": True}),
                 "full_load": ("BOOLEAN", {"default": True}),
                 "quantize": ("BOOLEAN", {"default": True}),
-                "quantize_on_load_device": ("BOOLEAN", {"default": False}),
+                "quantize_on_load_device": ("BOOLEAN", {"default": True}),
                 **get_quant_inputs(),
             }
         }
@@ -153,7 +153,7 @@ class VelocatorLoadAndQuantizeClip:
                 "lowvram": ("BOOLEAN", {"default": True}),
                 "full_load": ("BOOLEAN", {"default": True}),
                 "quantize": ("BOOLEAN", {"default": True}),
-                "quantize_on_load_device": ("BOOLEAN", {"default": False}),
+                "quantize_on_load_device": ("BOOLEAN", {"default": True}),
                 **get_quant_inputs(),
             }
         }
