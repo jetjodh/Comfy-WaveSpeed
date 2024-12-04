@@ -63,6 +63,7 @@ class VelocatorLoadAndQuantizeDiffusionModel:
                 "lowvram": ("BOOLEAN", {"default": True}),
                 "full_load": ("BOOLEAN", {"default": True}),
                 "quantize": ("BOOLEAN", {"default": True}),
+                "quantize_on_load_device": ("BOOLEAN", {"default": False}),
                 **get_quant_inputs(),
             }
         }
@@ -70,7 +71,7 @@ class VelocatorLoadAndQuantizeDiffusionModel:
     RETURN_TYPES = ("MODEL",)
     FUNCTION = "load_unet"
 
-    CATEGORY = "wavespeed"
+    CATEGORY = "wavespeed/velocator"
 
     def load_unet(
         self,
@@ -79,12 +80,15 @@ class VelocatorLoadAndQuantizeDiffusionModel:
         lowvram,
         full_load,
         quantize,
+        quantize_on_load_device,
         quant_type,
         filter_fn,
         filter_fn_kwargs,
         kwargs,
     ):
         model_options = {}
+        if lowvram:
+            model_options["initial_device"] = torch.device("cpu")
         model_options = utils.parse_weight_dtype(model_options, weight_dtype)
 
         unet_path = folder_paths.get_full_path_or_raise("diffusion_models", unet_name)
@@ -96,13 +100,20 @@ class VelocatorLoadAndQuantizeDiffusionModel:
 
             kwargs = json.loads(kwargs) if kwargs else {}
 
-            if lowvram and full_load:
+            if lowvram and quantize_on_load_device:
                 preprocessor = lambda t: (
                     t.to(patchers.QuantizedModelPatcher._load_device)
                     if patchers.QuantizedModelPatcher._load_device is not None
                     else t
                 )
                 kwargs["preprocessor"] = preprocessor
+                if not full_load:
+                    postprocessor = lambda t: (
+                        t.to(patchers.QuantizedModelPatcher._offload_device)
+                        if patchers.QuantizedModelPatcher._offload_device is not None
+                        else t
+                    )
+                    kwargs["postprocessor"] = postprocessor
 
             quantize_fn = functools.partial(
                 quantize,
@@ -142,6 +153,7 @@ class VelocatorLoadAndQuantizeClip:
                 "lowvram": ("BOOLEAN", {"default": True}),
                 "full_load": ("BOOLEAN", {"default": True}),
                 "quantize": ("BOOLEAN", {"default": True}),
+                "quantize_on_load_device": ("BOOLEAN", {"default": False}),
                 **get_quant_inputs(),
             }
         }
@@ -149,7 +161,7 @@ class VelocatorLoadAndQuantizeClip:
     RETURN_TYPES = ("CLIP",)
     FUNCTION = "load_clip"
 
-    CATEGORY = "wavespeed"
+    CATEGORY = "wavespeed/velocator"
 
     def load_clip(
         self,
@@ -161,12 +173,15 @@ class VelocatorLoadAndQuantizeClip:
         lowvram,
         full_load,
         quantize,
+        quantize_on_load_device,
         quant_type,
         filter_fn,
         filter_fn_kwargs,
         kwargs,
     ):
         model_options = {}
+        if lowvram:
+            model_options["initial_device"] = torch.device("cpu")
         model_options = utils.parse_weight_dtype(model_options, weight_dtype)
 
         clip_paths = []
@@ -190,13 +205,20 @@ class VelocatorLoadAndQuantizeClip:
 
             kwargs = json.loads(kwargs) if kwargs else {}
 
-            if lowvram and full_load:
+            if lowvram and quantize_on_load_device:
                 preprocessor = lambda t: (
                     t.to(patchers.QuantizedModelPatcher._load_device)
                     if patchers.QuantizedModelPatcher._load_device is not None
                     else t
                 )
                 kwargs["preprocessor"] = preprocessor
+                if not full_load:
+                    postprocessor = lambda t: (
+                        t.to(patchers.QuantizedModelPatcher._offload_device)
+                        if patchers.QuantizedModelPatcher._offload_device is not None
+                        else t
+                    )
+                    kwargs["postprocessor"] = postprocessor
 
             quantize_fn = functools.partial(
                 quantize,
@@ -245,7 +267,7 @@ class VelocatorQuantizeModel:
     RETURN_TYPES = ("MODEL",)
     FUNCTION = "patch"
 
-    CATEGORY = "wavespeed"
+    CATEGORY = "wavespeed/velocator"
 
     def patch(
         self,
@@ -340,7 +362,7 @@ class VelocatorCompileModel:
     RETURN_TYPES = ("MODEL",)
     FUNCTION = "patch"
 
-    CATEGORY = "wavespeed"
+    CATEGORY = "wavespeed/velocator"
 
     def patch(
         self,

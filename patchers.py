@@ -15,6 +15,7 @@ class QuantizedModelPatcher(comfy.model_patcher.ModelPatcher):
     _full_load_default = True
 
     _load_device = None
+    _offload_device = None
     _disable_load = False
 
     @classmethod
@@ -54,12 +55,12 @@ class QuantizedModelPatcher(comfy.model_patcher.ModelPatcher):
         if self._disable_load:
             return
 
-        with unittest.mock.patch.object(QuantizedModelPatcher, "_load_device", device_to):
+        with unittest.mock.patch.object(QuantizedModelPatcher, "_load_device", self.load_device), unittest.mock.patch.object(QuantizedModelPatcher, "_offload_device", self.offload_device):
             # always call `patch_weight_to_device` even for lowvram
             super().load(
                 torch.device("cpu") if self._lowvram else device_to,
                 force_patch_weights=True,
-                full_load=self._full_load,
+                full_load=self._full_load or full_load,
                 **kwargs,
             )
 
