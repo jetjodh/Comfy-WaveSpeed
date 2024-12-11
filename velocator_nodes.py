@@ -383,7 +383,8 @@ class VelocatorCompileModel:
 
         memory_format = getattr(torch, memory_format)
 
-        options = json.loads(options) if options else {}
+        mode = mode if mode else None
+        options = json.loads(options) if options else None
         if backend == "velocator":
             backend = "xelerate"
 
