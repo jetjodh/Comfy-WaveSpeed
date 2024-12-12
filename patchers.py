@@ -13,6 +13,7 @@ class QuantizedModelPatcher(comfy.model_patcher.ModelPatcher):
     _quantize_fn_default = None
     _lowvram_default = True
     _full_load_default = True
+    _is_quantized_default = False
 
     _load_device = None
     _offload_device = None
@@ -48,11 +49,21 @@ class QuantizedModelPatcher(comfy.model_patcher.ModelPatcher):
         self._quantize_fn = QuantizedModelPatcher._quantize_fn_default
         self._lowvram = QuantizedModelPatcher._lowvram_default
         self._full_load = QuantizedModelPatcher._full_load_default
+        self._is_quantized = QuantizedModelPatcher._is_quantized_default
 
     def load(
         self, device_to=None, force_patch_weights=False, full_load=False, **kwargs
     ):
         if self._disable_load:
+            return
+
+        if self._is_quantized:
+            super().load(
+                device_to=device_to,
+                force_patch_weights=force_patch_weights,
+                full_load=full_load,
+                **kwargs,
+            )
             return
 
         with unittest.mock.patch.object(QuantizedModelPatcher, "_load_device", self.load_device), unittest.mock.patch.object(QuantizedModelPatcher, "_offload_device", self.offload_device):
@@ -76,7 +87,14 @@ class QuantizedModelPatcher(comfy.model_patcher.ModelPatcher):
                     comfy.utils.set_attr(self.model, self._object_to_patch, target_model)
 
             if self._lowvram:
+                if device_to.type == "cuda":
+                    torch.cuda.empty_cache()
                 self.model.to(device_to)
+
+        self._is_quantized = True
+
+    # def model_size(self):
+    #     return super().model_size() // 2
 
     def clone(self, *args, **kwargs):
         n = QuantizedModelPatcher(
@@ -105,5 +123,8 @@ class QuantizedModelPatcher(comfy.model_patcher.ModelPatcher):
         n._lowvram = getattr(self, "_lowvram", QuantizedModelPatcher._lowvram_default)
         n._full_load = getattr(
             self, "_full_load", QuantizedModelPatcher._full_load_default
+        )
+        n._is_quantized = getattr(
+            self, "_is_quantized", QuantizedModelPatcher._is_quantized_default
         )
         return n
