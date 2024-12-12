@@ -107,13 +107,10 @@ class VelocatorLoadAndQuantizeDiffusionModel:
                     else t
                 )
                 kwargs["preprocessor"] = preprocessor
-                if not full_load:
-                    postprocessor = lambda t: (
-                        t.to(patchers.QuantizedModelPatcher._offload_device)
-                        if patchers.QuantizedModelPatcher._offload_device is not None
-                        else t
-                    )
-                    kwargs["postprocessor"] = postprocessor
+                postprocessor = lambda t: (
+                    t.to(torch.device("cpu"))
+                )
+                kwargs["postprocessor"] = postprocessor
 
             quantize_fn = functools.partial(
                 quantize,
@@ -212,13 +209,10 @@ class VelocatorLoadAndQuantizeClip:
                     else t
                 )
                 kwargs["preprocessor"] = preprocessor
-                if not full_load:
-                    postprocessor = lambda t: (
-                        t.to(patchers.QuantizedModelPatcher._offload_device)
-                        if patchers.QuantizedModelPatcher._offload_device is not None
-                        else t
-                    )
-                    kwargs["postprocessor"] = postprocessor
+                postprocessor = lambda t: (
+                    t.to(torch.device("cpu"))
+                )
+                kwargs["postprocessor"] = postprocessor
 
             quantize_fn = functools.partial(
                 quantize,
