@@ -1,6 +1,17 @@
 import contextlib
 import unittest
+
 import torch
+
+
+# wildcard trick is taken from pythongossss's
+class AnyType(str):
+
+    def __ne__(self, __value: object) -> bool:
+        return False
+
+
+any_typ = AnyType("*")
 
 
 def get_weight_dtype_inputs():
@@ -39,7 +50,6 @@ def parse_weight_dtype(model_options, weight_dtype):
 
 @contextlib.contextmanager
 def disable_load_models_gpu():
-
     def foo(*args, **kwargs):
         pass
 

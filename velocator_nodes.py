@@ -2,13 +2,14 @@ import functools
 import importlib
 import json
 import unittest
+
 import comfy.model_management
 import comfy.model_patcher
 import comfy.sd
 import folder_paths
 import torch
-from . import patchers
-from . import utils
+
+from . import patchers, utils
 
 HAS_VELOCATOR = importlib.util.find_spec("xelerate") is not None
 
@@ -53,7 +54,6 @@ def get_quant_inputs():
 
 
 class VelocatorLoadAndQuantizeDiffusionModel:
-
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -107,9 +107,7 @@ class VelocatorLoadAndQuantizeDiffusionModel:
                     else t
                 )
                 kwargs["preprocessor"] = preprocessor
-                postprocessor = lambda t: (
-                    t.to(torch.device("cpu"))
-                )
+                postprocessor = lambda t: (t.to(torch.device("cpu")))
                 kwargs["postprocessor"] = postprocessor
 
             quantize_fn = functools.partial(
@@ -137,7 +135,6 @@ class VelocatorLoadAndQuantizeDiffusionModel:
 
 
 class VelocatorLoadAndQuantizeClip:
-
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -209,9 +206,7 @@ class VelocatorLoadAndQuantizeClip:
                     else t
                 )
                 kwargs["preprocessor"] = preprocessor
-                postprocessor = lambda t: (
-                    t.to(torch.device("cpu"))
-                )
+                postprocessor = lambda t: (t.to(torch.device("cpu")))
                 kwargs["postprocessor"] = postprocessor
 
             quantize_fn = functools.partial(
@@ -242,7 +237,6 @@ class VelocatorLoadAndQuantizeClip:
 
 
 class VelocatorQuantizeModel:
-
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -302,12 +296,17 @@ class VelocatorQuantizeModel:
 
 
 class VelocatorCompileModel:
-
     @classmethod
     def INPUT_TYPES(s):
         return {
             "required": {
-                "model": ("MODEL",),
+                "model": (utils.any_typ,),
+                "is_patcher": (
+                    "BOOLEAN",
+                    {
+                        "default": True,
+                    },
+                ),
                 "object_to_patch": (
                     "STRING",
                     {
@@ -353,7 +352,7 @@ class VelocatorCompileModel:
             }
         }
 
-    RETURN_TYPES = ("MODEL",)
+    RETURN_TYPES = (utils.any_typ,)
     FUNCTION = "patch"
 
     CATEGORY = "wavespeed/velocator"
@@ -361,6 +360,7 @@ class VelocatorCompileModel:
     def patch(
         self,
         model,
+        is_patcher,
         object_to_patch,
         memory_format,
         fullgraph,
@@ -375,6 +375,8 @@ class VelocatorCompileModel:
         from xelerate.compilers.xelerate_compiler import xelerate_compile
         from xelerate.utils.memory_format import apply_memory_format
 
+        compile_function = xelerate_compile
+
         memory_format = getattr(torch, memory_format)
 
         mode = mode if mode else None
@@ -382,12 +384,17 @@ class VelocatorCompileModel:
         if backend == "velocator":
             backend = "xelerate"
 
-        model = model.clone()
-        model.add_object_patch(
+        if is_patcher:
+            patcher = model.clone()
+        else:
+            patcher = model.patcher
+            patcher = patcher.clone()
+
+        patcher.add_object_patch(
             object_to_patch,
-            xelerate_compile(
+            compile_function(
                 apply_memory_format(
-                    model.get_model_object(object_to_patch),
+                    patcher.get_model_object(object_to_patch),
                     memory_format=memory_format,
                 ),
                 fullgraph=fullgraph,
@@ -399,4 +406,8 @@ class VelocatorCompileModel:
             ),
         )
 
-        return (model,)
+        if is_patcher:
+            return (patcher,)
+        else:
+            model.patcher = patcher
+            return (model,)

@@ -1,10 +1,11 @@
 import contextlib
 import copy
 import unittest
-import comfy.sd
-import comfy.utils
+
 import comfy.model_management
 import comfy.model_patcher
+import comfy.sd
+import comfy.utils
 import torch
 
 
@@ -66,7 +67,11 @@ class QuantizedModelPatcher(comfy.model_patcher.ModelPatcher):
             )
             return
 
-        with unittest.mock.patch.object(QuantizedModelPatcher, "_load_device", self.load_device), unittest.mock.patch.object(QuantizedModelPatcher, "_offload_device", self.offload_device):
+        with unittest.mock.patch.object(
+            QuantizedModelPatcher, "_load_device", self.load_device
+        ), unittest.mock.patch.object(
+            QuantizedModelPatcher, "_offload_device", self.offload_device
+        ):
             # always call `patch_weight_to_device` even for lowvram
             super().load(
                 torch.device("cpu") if self._lowvram else device_to,
@@ -79,12 +84,16 @@ class QuantizedModelPatcher(comfy.model_patcher.ModelPatcher):
                 if self._object_to_patch is None:
                     target_model = self.model
                 else:
-                    target_model = comfy.utils.get_attr(self.model, self._object_to_patch)
+                    target_model = comfy.utils.get_attr(
+                        self.model, self._object_to_patch
+                    )
                 target_model = self._quantize_fn(target_model)
                 if self._object_to_patch is None:
                     self.model = target_model
                 else:
-                    comfy.utils.set_attr(self.model, self._object_to_patch, target_model)
+                    comfy.utils.set_attr(
+                        self.model, self._object_to_patch, target_model
+                    )
 
             if self._lowvram:
                 if device_to.type == "cuda":
