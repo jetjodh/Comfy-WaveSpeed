@@ -214,11 +214,18 @@ class CachedTransformerBlocks(torch.nn.Module):
                 dim=1)
             for block in self.single_transformer_blocks:
                 hidden_states = block(hidden_states, *args, **kwargs)
-            encoder_hidden_states, hidden_states = hidden_states.split([
-                encoder_hidden_states.shape[1],
-                hidden_states.shape[1] - encoder_hidden_states.shape[1]
-            ],
-                                                                       dim=1)
+            if self.cat_hidden_states_first:
+                hidden_states, encoder_hidden_states = hidden_states.split([
+                    hidden_states.shape[1] - encoder_hidden_states.shape[1],
+                    encoder_hidden_states.shape[1]
+                ],
+                                                                           dim=1)
+            else:
+                encoder_hidden_states, hidden_states = hidden_states.split([
+                    encoder_hidden_states.shape[1],
+                    hidden_states.shape[1] - encoder_hidden_states.shape[1]
+                ],
+                                                                           dim=1)
 
         hidden_states_shape = hidden_states.shape
         encoder_hidden_states_shape = encoder_hidden_states.shape
