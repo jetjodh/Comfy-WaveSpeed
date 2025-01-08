@@ -12,7 +12,7 @@
 This is just launched, and we are working on it. Please stay tuned.
 For any request or question, please join the Discord server.
 
-[Discord Server](https://discord.gg/hkvUqGVQ)
+[Discord Server](https://discord.gg/xtk6jUtYtr)
 
 # Installation
 
