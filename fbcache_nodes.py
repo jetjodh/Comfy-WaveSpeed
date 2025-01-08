@@ -12,7 +12,7 @@ class ApplyFBCacheOnModel:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "model": (utils.any_typ, ),
+                "model": ("MODEL", ),
                 "object_to_patch": (
                     "STRING",
                     {
@@ -31,7 +31,7 @@ class ApplyFBCacheOnModel:
             }
         }
 
-    RETURN_TYPES = (utils.any_typ, )
+    RETURN_TYPES = ("MODEL", )
     FUNCTION = "patch"
 
     CATEGORY = "wavespeed"
