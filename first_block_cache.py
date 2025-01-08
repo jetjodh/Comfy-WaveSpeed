@@ -124,6 +124,7 @@ class CachedTransformerBlocks(torch.nn.Module):
         residual_diff_threshold,
         return_hidden_states_first=True,
         cat_hidden_states_first=False,
+        return_hidden_states_only=False,
     ):
         super().__init__()
         self.transformer_blocks = transformer_blocks
@@ -131,6 +132,7 @@ class CachedTransformerBlocks(torch.nn.Module):
         self.residual_diff_threshold = residual_diff_threshold
         self.return_hidden_states_first = return_hidden_states_first
         self.cat_hidden_states_first = cat_hidden_states_first
+        self.return_hidden_states_only = return_hidden_states_only
 
     def forward(self, img, txt=None, *args, context=None, **kwargs):
         if context is not None:
@@ -139,10 +141,12 @@ class CachedTransformerBlocks(torch.nn.Module):
         encoder_hidden_states = txt
         if self.residual_diff_threshold <= 0.0:
             for block in self.transformer_blocks:
-                hidden_states, encoder_hidden_states = block(
+                hidden_states = block(
                     hidden_states, encoder_hidden_states, *args, **kwargs)
-                if not self.return_hidden_states_first:
-                    hidden_states, encoder_hidden_states = encoder_hidden_states, hidden_states
+                if not self.return_hidden_states_only:
+                    hidden_states, encoder_hidden_states = hidden_states
+                    if not self.return_hidden_states_first:
+                        hidden_states, encoder_hidden_states = encoder_hidden_states, hidden_states
             if self.single_transformer_blocks is not None:
                 hidden_states = torch.cat(
                     [hidden_states, encoder_hidden_states]
@@ -153,16 +157,21 @@ class CachedTransformerBlocks(torch.nn.Module):
                     hidden_states = block(hidden_states, *args, **kwargs)
                 hidden_states = hidden_states[:,
                                               encoder_hidden_states.shape[1]:]
-            return ((hidden_states, encoder_hidden_states)
-                    if self.return_hidden_states_first else
-                    (encoder_hidden_states, hidden_states))
+            if self.return_hidden_states_only:
+                return hidden_states
+            else:
+                return ((hidden_states, encoder_hidden_states)
+                        if self.return_hidden_states_first else
+                        (encoder_hidden_states, hidden_states))
 
         original_hidden_states = hidden_states
         first_transformer_block = self.transformer_blocks[0]
-        hidden_states, encoder_hidden_states = first_transformer_block(
+        hidden_states = first_transformer_block(
             hidden_states, encoder_hidden_states, *args, **kwargs)
-        if not self.return_hidden_states_first:
-            hidden_states, encoder_hidden_states = encoder_hidden_states, hidden_states
+        if not self.return_hidden_states_only:
+            hidden_states, encoder_hidden_states = hidden_states
+            if not self.return_hidden_states_first:
+                hidden_states, encoder_hidden_states = encoder_hidden_states, hidden_states
         first_hidden_states_residual = hidden_states - original_hidden_states
         del original_hidden_states
 
@@ -186,15 +195,19 @@ class CachedTransformerBlocks(torch.nn.Module):
                 encoder_hidden_states_residual,
             ) = self.call_remaining_transformer_blocks(hidden_states,
                                                        encoder_hidden_states,
-                                                       *args, **kwargs)
+                                                       *args,
+                                                       **kwargs)
             set_buffer("hidden_states_residual", hidden_states_residual)
             set_buffer("encoder_hidden_states_residual",
                        encoder_hidden_states_residual)
         torch._dynamo.graph_break()
 
-        return ((hidden_states,
-                 encoder_hidden_states) if self.return_hidden_states_first else
-                (encoder_hidden_states, hidden_states))
+        if self.return_hidden_states_only:
+            return hidden_states
+        else:
+            return ((hidden_states,
+                     encoder_hidden_states) if self.return_hidden_states_first else
+                    (encoder_hidden_states, hidden_states))
 
     def call_remaining_transformer_blocks(self, hidden_states,
                                           encoder_hidden_states, *args,
@@ -202,10 +215,12 @@ class CachedTransformerBlocks(torch.nn.Module):
         original_hidden_states = hidden_states
         original_encoder_hidden_states = encoder_hidden_states
         for block in self.transformer_blocks[1:]:
-            hidden_states, encoder_hidden_states = block(
+            hidden_states = block(
                 hidden_states, encoder_hidden_states, *args, **kwargs)
-            if not self.return_hidden_states_first:
-                hidden_states, encoder_hidden_states = encoder_hidden_states, hidden_states
+            if not self.return_hidden_states_only:
+                hidden_states, encoder_hidden_states = hidden_states
+                if not self.return_hidden_states_first:
+                    hidden_states, encoder_hidden_states = encoder_hidden_states, hidden_states
         if self.single_transformer_blocks is not None:
             hidden_states = torch.cat(
                 [hidden_states, encoder_hidden_states]

@@ -55,6 +55,7 @@ class ApplyFBCacheOnModel:
                     diffusion_model, "single_blocks") else None,
                 residual_diff_threshold=residual_diff_threshold,
                 cat_hidden_states_first=diffusion_model.__class__.__name__ == "HunyuanVideo",
+                return_hidden_states_only=diffusion_model.__class__.__name__ == "LTXVModel",
             )
         ])
         dummy_single_transformer_blocks = torch.nn.ModuleList()
