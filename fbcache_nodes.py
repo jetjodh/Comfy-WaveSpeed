@@ -25,7 +25,7 @@ class ApplyFBCacheOnModel:
                         "default": 0.0,
                         "min": 0.0,
                         "max": 1.0,
-                        "step": 0.005,
+                        "step": 0.001,
                     },
                 ),
             }
@@ -54,6 +54,7 @@ class ApplyFBCacheOnModel:
                 diffusion_model.single_blocks if hasattr(
                     diffusion_model, "single_blocks") else None,
                 residual_diff_threshold=residual_diff_threshold,
+                cat_hidden_states_first=diffusion_model.__class__.__name__ == "HunyuanVideo",
             )
         ])
         dummy_single_transformer_blocks = torch.nn.ModuleList()
