@@ -1,6 +1,6 @@
 # Comfy-WaveSpeed
 
-[WIP] The all in one inference optimization solution for ComfyUl, universal, flexible, and fast.
+[WIP] The all in one inference optimization solution for ComfyUI, universal, flexible, and fast.
 
 - [Dynamic Caching (First Block Cache)](https://github.com/chengzeyi/ParaAttention?tab=readme-ov-file#first-block-cache-our-dynamic-caching)
 - Enhanced `torch.compile`
@@ -41,6 +41,8 @@ It supports many models like `FLUX`, `LTXV` and `HunyuanVideo (native)`, feel fr
 To use the Enhanced `torch.compile`, simply add the `wavespeed->Compile Model+` node to your workflow after your `Load Diffusion Model` node or `Apply First Block Cache` node.
 The compilation process happens the first time you run the workflow, and it takes quite a long time, but it will be cached for future runs.
 You can pass different `mode` values to make it runs faster, for example `max-autotune` or `max-autotune-no-cudagraphs`.
+
+**NOTE**: `torch.compile` might not be able to work with model offloading well, you could try passing `--gpu-only` when launching your `ComfyUI` to disable model offloading.
 
 ![Usage of Enhanced `torch.compile`](./assets/usage_compile.png)
 
