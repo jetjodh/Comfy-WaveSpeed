@@ -45,6 +45,7 @@ NODE_CLASS_MAPPINGS = {
 NODE_DISPLAY_NAME_MAPPINGS = {
     "ApplyFBCacheOnModel": "Apply First Block Cache",
     "EnhancedLoadDiffusionModel": "Load Diffusion Model+",
+    "EnhancedCompileModel": "Compile Model+",
     "VelocatorLoadAndQuantizeDiffusionModel": "🚀Load & Quantize Diffusion Model",
     "VelocatorLoadAndQuantizeClip": "🚀Load & Quantize CLIP",
     "VelocatorQuantizeModel": "🚀Quantize Model",
