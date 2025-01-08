@@ -7,7 +7,7 @@
 
 More to come...
 
-- [ ] Multi-GPU Inference (ComfyUI version of [ParaAttention](https://github.com/chengzeyi/ParaAttention))
+- [ ] Multi-GPU Inference (ComfyUI version of [ParaAttention's Context Parallelism](https://github.com/chengzeyi/ParaAttention?tab=readme-ov-file#context-parallelism))
 
 | FLUX.1-dev Original | FLUX.1-dev with First Block Cache and Compilation |
 | - | - |
