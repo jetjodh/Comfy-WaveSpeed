@@ -1,7 +1,7 @@
 [project]
 name = "wavespeed"
-description = ""
-version = "1.0.8"
+description = "The all in one inference optimization solution for ComfyUI, universal, flexible, and fast."
+version = "1.0.9"
 license = {file = "LICENSE"}
 
 [project.urls]
