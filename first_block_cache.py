@@ -124,7 +124,9 @@ class CachedTransformerBlocks(torch.nn.Module):
         self.residual_diff_threshold = residual_diff_threshold
         self.return_hidden_states_first = return_hidden_states_first
 
-    def forward(self, img, txt, *args, **kwargs):
+    def forward(self, img, txt=None, context=None, *args, **kwargs):
+        if context is not None:
+            txt = context  # for LTXV
         hidden_states = img
         encoder_hidden_states = txt
         if self.residual_diff_threshold <= 0.0:
