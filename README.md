@@ -53,6 +53,7 @@ The compilation process happens the first time you run the workflow, and it take
 You can pass different `mode` values to make it runs faster, for example `max-autotune` or `max-autotune-no-cudagraphs`.
 
 **NOTE**: `torch.compile` might not be able to work with model offloading well, you could try passing `--gpu-only` when launching your `ComfyUI` to disable model offloading.
+**NOTE**: `torch.compile` does not work on Windows offcially and has problems working with LoRAs, you should not use this node if you are facing these issues.
 
 ![Usage of Enhanced `torch.compile`](./assets/usage_compile.png)
 
