@@ -38,6 +38,8 @@ It is expected to see a speedup of 1.5x to 3.0x with acceptable accuracy loss.
 
 It supports many models like `FLUX`, `LTXV` and `HunyuanVideo (native)`, feel free to try it out and let us know if you have any issues!
 
+See [Apply First Block Cache on FLUX.1-dev](https://github.com/chengzeyi/ParaAttention/blob/main/doc/fastest_flux.md#apply-first-block-cache-on-flux1-dev) for more information and detailed comparison on quality and speed.
+
 ![Usage of First Block Cache](./assets/usage_fbcache.png)
 
 ## Enhanced `torch.compile`
