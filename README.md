@@ -2,8 +2,12 @@
 
 [WIP] The all in one inference optimization solution for ComfyUI, universal, flexible, and fast.
 
-- [Dynamic Caching (First Block Cache)](https://github.com/chengzeyi/ParaAttention?tab=readme-ov-file#first-block-cache-our-dynamic-caching)
-- Enhanced `torch.compile`
+[x] [Dynamic Caching (First Block Cache)](https://github.com/chengzeyi/ParaAttention?tab=readme-ov-file#first-block-cache-our-dynamic-caching)
+[x] Enhanced `torch.compile`
+
+More to come...
+
+[ ] Multi-GPU Inference (ComfyUI version of [ParaAttention](https://github.com/chengzeyi/ParaAttention))
 
 | FLUX.1-dev Original | FLUX.1-dev with First Block Cache and Compilation |
 | - | - |
