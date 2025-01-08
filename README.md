@@ -27,7 +27,11 @@ git clone https://github.com/chengzeyi/Comfy-WaveSpeed.git
 
 You can find demo workflows in the `workflows` folder.
 
-## Dynamic Caching (First Block Cache)
+## Dynamic Caching ([First Block Cache](https://github.com/chengzeyi/ParaAttention?tab=readme-ov-file#first-block-cache-our-dynamic-caching))
+
+Inspired by TeaCache and other denoising caching algorithms, we introduce [First Block Cache (FBCache)](https://github.com/chengzeyi/ParaAttention?tab=readme-ov-file#first-block-cache-our-dynamic-caching) to use the residual output of the first transformer block as the cache indicator.
+If the difference between the current and the previous residual output of the first transformer block is small enough, we can reuse the previous final residual output and skip the computation of all the following transformer blocks.
+This can significantly reduce the computation cost of the model, achieving a speedup of up to 2x while maintaining high accuracy.
 
 To use first block cache, simply add the `wavespeed->Apply First Block Cache` node to your workflow after your `Load Diffusion Model` node and adjust the `residual_diff_threashold` value to a suitable value for your model, for example: `0.07` for `flux-dev.safetensors` with `fp8_e4m3fn_fast`.
 It is expected to see a speedup of 1.5x to 3.0x with acceptable accuracy loss.
