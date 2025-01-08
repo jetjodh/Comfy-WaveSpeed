@@ -57,3 +57,48 @@ def disable_load_models_gpu():
 
     with unittest.mock.patch.object(model_management, "load_models_gpu", foo):
         yield
+
+
+def patch_optimized_module():
+    try:
+        from torch._dynamo.eval_frame import OptimizedModule
+    except ImportError:
+        return
+
+    if getattr(OptimizedModule, "_patched", False):
+        return
+
+    def __getattribute__(self, name):
+        if name == "_orig_mod":
+            return object.__getattribute__(self, "_modules")[name]
+        if name in (
+            "__class__",
+            "_modules",
+            "state_dict",
+            "load_state_dict",
+            "parameters",
+            "named_parameters",
+            "buffers",
+            "named_buffers",
+            "children",
+            "named_children",
+            "modules",
+            "named_modules",
+        ):
+            return getattr(object.__getattribute__(self, "_orig_mod"), name)
+        return object.__getattribute__(self, name)
+
+    def __delattr__(self, name):
+        # unload_lora_weights() wants to del peft_config
+        return delattr(self._orig_mod, name)
+
+    @classmethod
+    def __instancecheck__(cls, instance):
+        return isinstance(instance, OptimizedModule) or issubclass(
+            object.__getattribute__(instance, "__class__"), cls
+        )
+
+    OptimizedModule.__getattribute__ = __getattribute__
+    OptimizedModule.__delattr__ = __delattr__
+    OptimizedModule.__instancecheck__ = __instancecheck__
+    OptimizedModule._patched = True

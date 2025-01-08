@@ -109,6 +109,8 @@ class EnhancedCompileModel:
         disable,
         backend,
     ):
+        utils.patch_optimized_module()
+
         import_path, function_name = compiler.rsplit(".", 1)
         module = importlib.import_module(import_path)
         compile_function = getattr(module, function_name)
