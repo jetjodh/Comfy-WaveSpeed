@@ -37,7 +37,7 @@ Inspired by TeaCache and other denoising caching algorithms, we introduce [First
 If the difference between the current and the previous residual output of the first transformer block is small enough, we can reuse the previous final residual output and skip the computation of all the following transformer blocks.
 This can significantly reduce the computation cost of the model, achieving a speedup of up to 2x while maintaining high accuracy.
 
-To use first block cache, simply add the `wavespeed->Apply First Block Cache` node to your workflow after your `Load Diffusion Model` node and adjust the `residual_diff_threashold` value to a suitable value for your model, for example: `0.07` for `flux-dev.safetensors` with `fp8_e4m3fn_fast`.
+To use first block cache, simply add the `wavespeed->Apply First Block Cache` node to your workflow after your `Load Diffusion Model` node and adjust the `residual_diff_threashold` value to a suitable value for your model, for example: `0.07` for `flux-dev.safetensors` with `fp8_e4m3fn_fast` and 28 steps.
 It is expected to see a speedup of 1.5x to 3.0x with acceptable accuracy loss.
 
 It supports many models like `FLUX`, `LTXV` and `HunyuanVideo (native)`, feel free to try it out and let us know if you have any issues!
