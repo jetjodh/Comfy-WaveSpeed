@@ -18,6 +18,8 @@ For any request or question, please join the Discord server.
 
 [Discord Server](https://discord.gg/xtk6jUtYtr)
 
+[Comfy Registry](https://registry.comfy.org/nodes/wavespeed)
+
 # Installation
 
 ```bash
@@ -55,7 +57,7 @@ One of the advantages of this node over the original `TorchCompileModel` node is
 
 **NOTE**: `torch.compile` might not be able to work with model offloading well, you could try passing `--gpu-only` when launching your `ComfyUI` to disable model offloading.
 
-**NOTE**: `torch.compile` does not work on Windows offcially, you should not use this node if you are facing these issues, or search on Google to find out how to make it work.
+**NOTE**: `torch.compile` does not work on Windows offcially, you should not use this node if you are facing this problem, or search on Google to find out how to make it work.
 
 ![Usage of Enhanced `torch.compile`](./assets/usage_compile.png)
 
