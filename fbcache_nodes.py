@@ -2,7 +2,6 @@ import contextlib
 import unittest
 import torch
 
-from . import utils
 from . import first_block_cache
 
 
@@ -56,6 +55,7 @@ class ApplyFBCacheOnModel:
                 residual_diff_threshold=residual_diff_threshold,
                 cat_hidden_states_first=diffusion_model.__class__.__name__ == "HunyuanVideo",
                 return_hidden_states_only=diffusion_model.__class__.__name__ == "LTXVModel",
+                clone_original_hidden_states=diffusion_model.__class__.__name__ == "LTXVModel",
             )
         ])
         dummy_single_transformer_blocks = torch.nn.ModuleList()

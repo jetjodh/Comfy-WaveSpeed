@@ -29,9 +29,13 @@ git clone https://github.com/chengzeyi/Comfy-WaveSpeed.git
 
 # Usage
 
-## Demo Workflow
+## Demo Workflows
 
 You can find demo workflows in the `workflows` folder.
+
+[FLUX.1-dev with First Block Cache and Compilation](./workflows/flux.json)
+
+[LTXV with First Block Cache and Compilation](./workflows/ltxv.json)
 
 ## Dynamic Caching ([First Block Cache](https://github.com/chengzeyi/ParaAttention?tab=readme-ov-file#first-block-cache-our-dynamic-caching))
 
@@ -42,7 +46,13 @@ This can significantly reduce the computation cost of the model, achieving a spe
 To use first block cache, simply add the `wavespeed->Apply First Block Cache` node to your workflow after your `Load Diffusion Model` node and adjust the `residual_diff_threashold` value to a suitable value for your model, for example: `0.07` for `flux-dev.safetensors` with `fp8_e4m3fn_fast` and 28 steps.
 It is expected to see a speedup of 1.5x to 3.0x with acceptable accuracy loss.
 
-It supports many models like `FLUX`, `LTXV` and `HunyuanVideo (native)`, feel free to try it out and let us know if you have any issues!
+Some configurations for different models that you can try:
+
+| Model | Steps | `residual_diff_threashold` |
+| `flux-dev.safetensors` with `fp8_e4m3fn_fast` | 28 | 0.07 |
+| `ltx-video-2b-v0.9.1.safetensors` | 30 | 0.051 |
+
+It supports many models like `FLUX`, `LTXV (native)` and `HunyuanVideo (native)`, feel free to try it out and let us know if you have any issues!
 
 See [Apply First Block Cache on FLUX.1-dev](https://github.com/chengzeyi/ParaAttention/blob/main/doc/fastest_flux.md#apply-first-block-cache-on-flux1-dev) for more information and detailed comparison on quality and speed.
 
