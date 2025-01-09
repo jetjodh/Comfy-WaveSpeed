@@ -149,21 +149,18 @@ class CachedTransformerBlocks(torch.nn.Module):
                 txt = args[0]
                 args = args[1:]
             else:
-                txt = kwargs.pop("txt")
+                txt = kwargs.pop("txt" if "txt" in kwargs else "context")
         else:
             if args:
                 txt = args[0]
                 args = args[1:]
             else:
-                txt = kwargs.pop("txt")
+                txt = kwargs.pop("txt" if "txt" in kwargs else "context")
             if args:
                 img = args[0]
                 args = args[1:]
             else:
                 img = kwargs.pop("img")
-        context = kwargs.pop("context", None)
-        if context is not None:
-            txt = context  # for LTXV
         hidden_states = img
         encoder_hidden_states = txt
         if self.residual_diff_threshold <= 0.0:
