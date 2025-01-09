@@ -123,6 +123,7 @@ class CachedTransformerBlocks(torch.nn.Module):
         *,
         residual_diff_threshold,
         return_hidden_states_first=True,
+        accept_hidden_states_first=True,
         cat_hidden_states_first=False,
         return_hidden_states_only=False,
         clone_original_hidden_states=False,
@@ -132,19 +133,47 @@ class CachedTransformerBlocks(torch.nn.Module):
         self.single_transformer_blocks = single_transformer_blocks
         self.residual_diff_threshold = residual_diff_threshold
         self.return_hidden_states_first = return_hidden_states_first
+        self.accept_hidden_states_first = accept_hidden_states_first
         self.cat_hidden_states_first = cat_hidden_states_first
         self.return_hidden_states_only = return_hidden_states_only
         self.clone_original_hidden_states = clone_original_hidden_states
 
-    def forward(self, img, txt=None, *args, context=None, **kwargs):
+    def forward(self, *args, **kwargs):
+        if self.accept_hidden_states_first:
+            if args:
+                img = args[0]
+                args = args[1:]
+            else:
+                img = kwargs.pop("img")
+            if args:
+                txt = args[0]
+                args = args[1:]
+            else:
+                txt = kwargs.pop("txt")
+        else:
+            if args:
+                txt = args[0]
+                args = args[1:]
+            else:
+                txt = kwargs.pop("txt")
+            if args:
+                img = args[0]
+                args = args[1:]
+            else:
+                img = kwargs.pop("img")
+        context = kwargs.pop("context", None)
         if context is not None:
             txt = context  # for LTXV
         hidden_states = img
         encoder_hidden_states = txt
         if self.residual_diff_threshold <= 0.0:
             for block in self.transformer_blocks:
-                hidden_states = block(
-                    hidden_states, encoder_hidden_states, *args, **kwargs)
+                if self.accept_hidden_states_first:
+                    hidden_states = block(
+                        hidden_states, encoder_hidden_states, *args, **kwargs)
+                else:
+                    hidden_states = block(
+                        encoder_hidden_states, hidden_states, *args, **kwargs)
                 if not self.return_hidden_states_only:
                     hidden_states, encoder_hidden_states = hidden_states
                     if not self.return_hidden_states_first:
@@ -170,8 +199,12 @@ class CachedTransformerBlocks(torch.nn.Module):
         if self.clone_original_hidden_states:
             original_hidden_states = original_hidden_states.clone()
         first_transformer_block = self.transformer_blocks[0]
-        hidden_states = first_transformer_block(
-            hidden_states, encoder_hidden_states, *args, **kwargs)
+        if self.accept_hidden_states_first:
+            hidden_states = first_transformer_block(
+                hidden_states, encoder_hidden_states, *args, **kwargs)
+        else:
+            hidden_states = first_transformer_block(
+                encoder_hidden_states, hidden_states, *args, **kwargs)
         if not self.return_hidden_states_only:
             hidden_states, encoder_hidden_states = hidden_states
             if not self.return_hidden_states_first:
@@ -222,8 +255,12 @@ class CachedTransformerBlocks(torch.nn.Module):
             original_hidden_states = original_hidden_states.clone()
             original_encoder_hidden_states = original_encoder_hidden_states.clone()
         for block in self.transformer_blocks[1:]:
-            hidden_states = block(
-                hidden_states, encoder_hidden_states, *args, **kwargs)
+            if self.accept_hidden_states_first:
+                hidden_states = block(
+                    hidden_states, encoder_hidden_states, *args, **kwargs)
+            else:
+                hidden_states = block(
+                    encoder_hidden_states, hidden_states, *args, **kwargs)
             if not self.return_hidden_states_only:
                 hidden_states, encoder_hidden_states = hidden_states
                 if not self.return_hidden_states_first:
