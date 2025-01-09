@@ -51,7 +51,7 @@ Some configurations for different models that you can try:
 | Model | Steps | `residual_diff_threashold` |
 | - | - | - |
 | `flux-dev.safetensors` with `fp8_e4m3fn_fast` | 28 | 0.07 |
-| `ltx-video-2b-v0.9.1.safetensors` | 30 | 0.051 |
+| `ltx-video-2b-v0.9.1.safetensors` | 30 | 0.05 |
 
 It supports many models like `FLUX`, `LTXV (native)` and `HunyuanVideo (native)`, feel free to try it out and let us know if you have any issues!
 
