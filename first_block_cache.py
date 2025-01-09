@@ -213,15 +213,16 @@ class CachedTransformerBlocks(torch.nn.Module):
             first_hidden_states_residual,
             threshold=self.residual_diff_threshold,
         )
-        set_buffer("first_hidden_states_residual",
-                   first_hidden_states_residual)
-        del first_hidden_states_residual
 
         torch._dynamo.graph_break()
         if can_use_cache:
+            del first_hidden_states_residual
             hidden_states, encoder_hidden_states = apply_prev_hidden_states_residual(
                 hidden_states, encoder_hidden_states)
         else:
+            set_buffer("first_hidden_states_residual",
+                       first_hidden_states_residual)
+            del first_hidden_states_residual
             (
                 hidden_states,
                 encoder_hidden_states,
