@@ -49,6 +49,7 @@ It is expected to see a speedup of 1.5x to 3.0x with acceptable accuracy loss.
 Some configurations for different models that you can try:
 
 | Model | Steps | `residual_diff_threashold` |
+| - | - | - |
 | `flux-dev.safetensors` with `fp8_e4m3fn_fast` | 28 | 0.07 |
 | `ltx-video-2b-v0.9.1.safetensors` | 30 | 0.051 |
 
