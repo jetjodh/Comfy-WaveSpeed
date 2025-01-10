@@ -143,38 +143,54 @@ class CachedTransformerBlocks(torch.nn.Module):
         self.clone_original_hidden_states = clone_original_hidden_states
 
     def forward(self, *args, **kwargs):
+        img_arg_name = None
+        if "img" in kwargs:
+            img_arg_name = "img"
+        elif "hidden_states" in kwargs:
+            img_arg_name = "hidden_states"
+        txt_arg_name = None
+        if "txt" in kwargs:
+            txt_arg_name = "txt"
+        elif "context" in kwargs:
+            txt_arg_name = "context"
+        elif "encoder_hidden_states" in kwargs:
+            txt_arg_name = "encoder_hidden_states"
         if self.accept_hidden_states_first:
             if args:
                 img = args[0]
                 args = args[1:]
             else:
-                img = kwargs.pop("img")
+                img = kwargs.pop(img_arg_name)
             if args:
                 txt = args[0]
                 args = args[1:]
             else:
-                txt = kwargs.pop("txt" if "txt" in kwargs else "context")
+                txt = kwargs.pop(txt_arg_name)
         else:
             if args:
                 txt = args[0]
                 args = args[1:]
             else:
-                txt = kwargs.pop("txt" if "txt" in kwargs else "context")
+                txt = kwargs.pop(txt_arg_name)
             if args:
                 img = args[0]
                 args = args[1:]
             else:
-                img = kwargs.pop("img")
+                img = kwargs.pop(img_arg_name)
         hidden_states = img
         encoder_hidden_states = txt
         if self.residual_diff_threshold <= 0.0:
             for block in self.transformer_blocks:
-                if self.accept_hidden_states_first:
+                if txt_arg_name == "encoder_hidden_states":
                     hidden_states = block(
-                        hidden_states, encoder_hidden_states, *args, **kwargs)
+                        hidden_states, *args, encoder_hidden_states=encoder_hidden_states, **kwargs)
                 else:
-                    hidden_states = block(
-                        encoder_hidden_states, hidden_states, *args, **kwargs)
+                    if self.accept_hidden_states_first:
+                        hidden_states = block(
+                            hidden_states, encoder_hidden_states, *args, **kwargs)
+                    else:
+                        hidden_states = block(
+                            encoder_hidden_states, hidden_states, *args, **kwargs)
                 if not self.return_hidden_states_only:
                     hidden_states, encoder_hidden_states = hidden_states
                     if not self.return_hidden_states_first:
@@ -200,12 +216,16 @@ class CachedTransformerBlocks(torch.nn.Module):
         if self.clone_original_hidden_states:
             original_hidden_states = original_hidden_states.clone()
         first_transformer_block = self.transformer_blocks[0]
-        if self.accept_hidden_states_first:
+        if txt_arg_name == "encoder_hidden_states":
             hidden_states = first_transformer_block(
-                hidden_states, encoder_hidden_states, *args, **kwargs)
+                hidden_states, *args, encoder_hidden_states=encoder_hidden_states, **kwargs)
         else:
-            hidden_states = first_transformer_block(
-                encoder_hidden_states, hidden_states, *args, **kwargs)
+            if self.accept_hidden_states_first:
+                hidden_states = first_transformer_block(
+                    hidden_states, encoder_hidden_states, *args, **kwargs)
+            else:
+                hidden_states = first_transformer_block(
+                    encoder_hidden_states, hidden_states, *args, **kwargs)
         if not self.return_hidden_states_only:
             hidden_states, encoder_hidden_states = hidden_states
             if not self.return_hidden_states_first:
@@ -237,6 +257,7 @@ class CachedTransformerBlocks(torch.nn.Module):
             ) = self.call_remaining_transformer_blocks(hidden_states,
                                                        encoder_hidden_states,
                                                        *args,
+                                                       txt_arg_name=txt_arg_name,
                                                        **kwargs)
             set_buffer("hidden_states_residual", hidden_states_residual)
             set_buffer("encoder_hidden_states_residual",
@@ -252,6 +273,7 @@ class CachedTransformerBlocks(torch.nn.Module):
 
     def call_remaining_transformer_blocks(self, hidden_states,
                                           encoder_hidden_states, *args,
+                                          txt_arg_name=None,
                                           **kwargs):
         original_hidden_states = hidden_states
         original_encoder_hidden_states = encoder_hidden_states
@@ -259,12 +281,16 @@ class CachedTransformerBlocks(torch.nn.Module):
             original_hidden_states = original_hidden_states.clone()
             original_encoder_hidden_states = original_encoder_hidden_states.clone()
         for block in self.transformer_blocks[1:]:
-            if self.accept_hidden_states_first:
+            if txt_arg_name == "encoder_hidden_states":
                 hidden_states = block(
-                    hidden_states, encoder_hidden_states, *args, **kwargs)
+                    hidden_states, *args, encoder_hidden_states=encoder_hidden_states, **kwargs)
             else:
-                hidden_states = block(
-                    encoder_hidden_states, hidden_states, *args, **kwargs)
+                if self.accept_hidden_states_first:
+                    hidden_states = block(
+                        hidden_states, encoder_hidden_states, *args, **kwargs)
+                else:
+                    hidden_states = block(
+                        encoder_hidden_states, hidden_states, *args, **kwargs)
             if not self.return_hidden_states_only:
                 hidden_states, encoder_hidden_states = hidden_states
                 if not self.return_hidden_states_first:

@@ -53,7 +53,7 @@ Some configurations for different models that you can try:
 | `flux-dev.safetensors` with `fp8_e4m3fn_fast` | 28 | 0.12 |
 | `ltx-video-2b-v0.9.1.safetensors` | 30 | 0.1 |
 
-It supports many models like `FLUX`, `LTXV (native)` and `HunyuanVideo (native)`, feel free to try it out and let us know if you have any issues!
+It supports many models like `FLUX`, `LTXV (native and non-native)` and `HunyuanVideo (native)`, feel free to try it out and let us know if you have any issues!
 
 See [Apply First Block Cache on FLUX.1-dev](https://github.com/chengzeyi/ParaAttention/blob/main/doc/fastest_flux.md#apply-first-block-cache-on-flux1-dev) for more information and detailed comparison on quality and speed.
 
