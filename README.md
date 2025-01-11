@@ -70,6 +70,8 @@ One of the advantages of this node over the original `TorchCompileModel` node is
 
 **NOTE**: `torch.compile` does not work on Windows offcially, you should not use this node if you are facing this problem, or search on Google to find out how to make it work.
 
+**NOTE**: Compiling a model with FP8 quantization does not work on pre-Ada GPUs like RTX 3090, you should try using FP16/BF16 models or removing the compilation node.
+
 ![Usage of Enhanced `torch.compile`](./assets/usage_compile.png)
 
 # Others

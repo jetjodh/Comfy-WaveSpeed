@@ -120,14 +120,16 @@ class ApplyFBCacheOnModel:
             original_create_skip_layer_mask = getattr(
                 diffusion_model, "create_skip_layer_mask", None)
             if original_create_skip_layer_mask is not None:
-                original_double_blocks = getattr(diffusion_model,
-                                                 double_blocks_name)
+                # original_double_blocks = getattr(diffusion_model,
+                #                                  double_blocks_name)
 
                 def new_create_skip_layer_mask(self, *args, **kwargs):
-                    with unittest.mock.patch.object(self, double_blocks_name,
-                                                    original_double_blocks):
-                        return original_create_skip_layer_mask(*args, **kwargs)
-                    return original_create_skip_layer_mask(*args, **kwargs)
+                    # with unittest.mock.patch.object(self, double_blocks_name,
+                    #                                 original_double_blocks):
+                    #     return original_create_skip_layer_mask(*args, **kwargs)
+                    # return original_create_skip_layer_mask(*args, **kwargs)
+                    raise RuntimeError(
+                        "STG is not supported with FBCache yet")
 
                 diffusion_model.create_skip_layer_mask = new_create_skip_layer_mask.__get__(
                     diffusion_model)
