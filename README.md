@@ -58,7 +58,7 @@ Some configurations for different models that you can try:
 | `ltx-video-2b-v0.9.1.safetensors` | 30 | 0.1 |
 | `sd_xl_base_1.0.safetensors` | 25 | 0.2 |
 
-It supports many models like `FLUX`, `LTXV (native and non-native)` and `HunyuanVideo (native)`, feel free to try it out and let us know if you have any issues!
+It supports many models like `FLUX`, `LTXV (native and non-native)`, `HunyuanVideo (native)` and `SDXL`, feel free to try it out and let us know if you have any issues!
 
 See [Apply First Block Cache on FLUX.1-dev](https://github.com/chengzeyi/ParaAttention/blob/main/doc/fastest_flux.md#apply-first-block-cache-on-flux1-dev) for more information and detailed comparison on quality and speed.
 
