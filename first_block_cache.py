@@ -354,6 +354,52 @@ def patch_unet_model__forward(model,
                               *,
                               residual_diff_threshold,
                               validate_can_use_cache_function=None):
+    from comfy.ldm.modules.diffusionmodules.openaimodel import timestep_embedding, forward_timestep_embed, apply_control
+
+    def call_remaining_blocks(self, transformer_options, control,
+                              transformer_patches, hs, h, *args, **kwargs):
+        original_h = h
+
+        for id, module in enumerate(self.input_blocks[2:]):
+            transformer_options["block"] = ("input", id)
+            h = forward_timestep_embed(module, h, *args, **kwargs)
+            h = apply_control(h, control, 'input')
+            if "input_block_patch" in transformer_patches:
+                patch = transformer_patches["input_block_patch"]
+                for p in patch:
+                    h = p(h, transformer_options)
+
+            hs.append(h)
+            if "input_block_patch_after_skip" in transformer_patches:
+                patch = transformer_patches["input_block_patch_after_skip"]
+                for p in patch:
+                    h = p(h, transformer_options)
+
+        transformer_options["block"] = ("middle", 0)
+        if self.middle_block is not None:
+            h = forward_timestep_embed(self.middle_block, h, *args, **kwargs)
+        h = apply_control(h, control, 'middle')
+
+        for id, module in enumerate(self.output_blocks):
+            transformer_options["block"] = ("output", id)
+            hsp = hs.pop()
+            hsp = apply_control(hsp, control, 'output')
+
+            if "output_block_patch" in transformer_patches:
+                patch = transformer_patches["output_block_patch"]
+                for p in patch:
+                    h, hsp = p(h, hsp, transformer_options)
+
+            h = torch.cat([h, hsp], dim=1)
+            del hsp
+            if len(hs) > 0:
+                output_shape = hs[-1].shape
+            else:
+                output_shape = None
+            h = forward_timestep_embed(module, h, *args, output_shape,
+                                       **kwargs)
+        hidden_states_residual = h - original_h
+        return h, hidden_states_residual
 
     def unet_model__forward(self,
                             x,
@@ -363,7 +409,6 @@ def patch_unet_model__forward(model,
                             control=None,
                             transformer_options={},
                             **kwargs):
-        from comfy.ldm.modules.diffusionmodules.openaimodel import timestep_embedding, forward_timestep_embed, apply_control
         """
         Apply the model to an input batch.
         :param x: an [N x C x ...] Tensor of inputs.
@@ -402,9 +447,7 @@ def patch_unet_model__forward(model,
         can_use_cache = False
 
         h = x
-        for id, module in enumerate(self.input_blocks):
-            if can_use_cache:
-                break
+        for id, module in enumerate(self.input_blocks[:2]):
             transformer_options["block"] = ("input", id)
             if id == 1:
                 original_h = h
@@ -443,54 +486,27 @@ def patch_unet_model__forward(model,
                                first_hidden_states_residual)
                 del first_hidden_states_residual
 
-        if not can_use_cache:
-            transformer_options["block"] = ("middle", 0)
-            if self.middle_block is not None:
-                h = forward_timestep_embed(
-                    self.middle_block,
-                    h,
-                    emb,
-                    context,
-                    transformer_options,
-                    time_context=time_context,
-                    num_video_frames=num_video_frames,
-                    image_only_indicator=image_only_indicator)
-            h = apply_control(h, control, 'middle')
-
-        if not can_use_cache:
-            for id, module in enumerate(self.output_blocks):
-                transformer_options["block"] = ("output", id)
-                hsp = hs.pop()
-                hsp = apply_control(hsp, control, 'output')
-
-                if "output_block_patch" in transformer_patches:
-                    patch = transformer_patches["output_block_patch"]
-                    for p in patch:
-                        h, hsp = p(h, hsp, transformer_options)
-
-                h = torch.cat([h, hsp], dim=1)
-                del hsp
-                if len(hs) > 0:
-                    output_shape = hs[-1].shape
-                else:
-                    output_shape = None
-                h = forward_timestep_embed(
-                    module,
-                    h,
-                    emb,
-                    context,
-                    transformer_options,
-                    output_shape,
-                    time_context=time_context,
-                    num_video_frames=num_video_frames,
-                    image_only_indicator=image_only_indicator)
-        h = h.type(x.dtype)
-
+        torch._dynamo.graph_break()
         if can_use_cache:
             h = apply_prev_hidden_states_residual(h)
         else:
-            hidden_states_residual = h - original_h
+            h, hidden_states_residual = call_remaining_blocks(
+                self,
+                transformer_options,
+                control,
+                transformer_patches,
+                hs,
+                h,
+                emb,
+                context,
+                transformer_options,
+                time_context=time_context,
+                num_video_frames=num_video_frames,
+                image_only_indicator=image_only_indicator)
             set_buffer("hidden_states_residual", hidden_states_residual)
+        torch._dynamo.graph_break()
+
+        h = h.type(x.dtype)
 
         if self.predict_codebook_ids:
             return self.id_predictor(h)
