@@ -37,6 +37,10 @@ You can find demo workflows in the `workflows` folder.
 
 [LTXV with First Block Cache and Compilation](./workflows/ltxv.json)
 
+[SDXL with First Block Cache](./workflows/sdxl.json)
+
+**NOTE**: The compilation node requires your computation to meet some software and hardware requirements, please refer to the [Enhanced `torch.compile`](Enhanced `torch.compile`) section for more information.
+
 ## Dynamic Caching ([First Block Cache](https://github.com/chengzeyi/ParaAttention?tab=readme-ov-file#first-block-cache-our-dynamic-caching))
 
 Inspired by TeaCache and other denoising caching algorithms, we introduce [First Block Cache (FBCache)](https://github.com/chengzeyi/ParaAttention?tab=readme-ov-file#first-block-cache-our-dynamic-caching) to use the residual output of the first transformer block as the cache indicator.
@@ -52,6 +56,7 @@ Some configurations for different models that you can try:
 | - | - | - |
 | `flux-dev.safetensors` with `fp8_e4m3fn_fast` | 28 | 0.12 |
 | `ltx-video-2b-v0.9.1.safetensors` | 30 | 0.1 |
+| `sd_xl_base_1.0.safetensors` | 25 | 0.2 |
 
 It supports many models like `FLUX`, `LTXV (native and non-native)` and `HunyuanVideo (native)`, feel free to try it out and let us know if you have any issues!
 
