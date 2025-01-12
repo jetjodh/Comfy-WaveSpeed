@@ -79,8 +79,11 @@ One of the advantages of this node over the original `TorchCompileModel` node is
 It is suggested to pass `--gpu-only` when launching your `ComfyUI` if you are using this node, for example, if you are using `comfy-cli`:
 
 ```bash
-comfy launch -- --gpu-only --force-channels-last
+comfy launch -- --gpu-only
 ```
+
+If you encounter any problems with frequent compilation after changing the resolution or text prompt, you could try enabling the `dynamic` option of the `Compile Model+` node.
+Or you could launch your `ComfyUI` with environment variable `TORCH_LOGS=recompiles_verbose` to debug the reason for recompilation.
 
 **NOTE**: `torch.compile` might not be able to work with model offloading well, you could try passing `--gpu-only` when launching your `ComfyUI` to disable model offloading.
 

@@ -118,6 +118,13 @@ class EnhancedCompileModel:
         mode = mode if mode else None
         options = json.loads(options) if options else None
 
+        if compiler == "torch.compile" and backend == "inductor" and dynamic:
+            # TODO: Fix this
+            # File "pytorch/torch/_inductor/fx_passes/post_grad.py", line 643, in same_meta
+            #   and statically_known_true(sym_eq(val1.size(), val2.size()))
+            #   AttributeError: 'SymInt' object has no attribute 'size'
+            pass
+
         if is_patcher:
             patcher = model.clone()
         else:
