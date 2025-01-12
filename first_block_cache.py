@@ -76,6 +76,28 @@ def cache_context(cache_context):
         _current_cache_context = old_cache_context
 
 
+def patch_get_output_data():
+    import execution
+
+    get_output_data = getattr(execution, "get_output_data", None)
+    if get_output_data is None:
+        return
+
+    if getattr(get_output_data, "_patched", False):
+        return
+
+    def new_get_output_data(*args, **kwargs):
+        out = get_output_data(*args, **kwargs)
+        cache_context = get_current_cache_context()
+        if cache_context is not None:
+            cache_context.clear_buffers()
+            set_current_cache_context(None)
+        return out
+
+    new_get_output_data._patched = True
+    execution.get_output_data = new_get_output_data
+
+
 @torch.compiler.disable()
 def are_two_tensors_similar(t1, t2, *, threshold):
     if t1.shape != t2.shape:

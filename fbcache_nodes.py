@@ -91,6 +91,8 @@ class ApplyFBCacheOnModel:
         if residual_diff_threshold <= 0:
             return (model, )
 
+        first_block_cache.patch_get_output_data()
+
         using_validation = max_consecutive_cache_hits > 0 or start > 0 or end < 1
         if using_validation:
             model_sampling = model.get_model_object("model_sampling")
