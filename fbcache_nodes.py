@@ -67,8 +67,10 @@ class ApplyFBCacheOnModel:
                     {
                         "default":
                         -1,
+                        "min":
+                        -1,
                         "tooltip":
-                        "Allows limiting how many cached results can be used in a row. For example, setting this to 1 will mean there will be at least one full model call after each cached result. Set to 0 or lower to disable cache limiting.",
+                        "Allows limiting how many cached results can be used in a row. For example, setting this to 1 will mean there will be at least one full model call after each cached result. Set to 0 to disable FBCache effect, or -1 to allow unlimited consecutive cache hits.",
                     },
                 ),
             }
@@ -88,12 +90,12 @@ class ApplyFBCacheOnModel:
         start=0.0,
         end=1.0,
     ):
-        if residual_diff_threshold <= 0:
+        if residual_diff_threshold <= 0.0 or max_consecutive_cache_hits == 0:
             return (model, )
 
         first_block_cache.patch_get_output_data()
 
-        using_validation = max_consecutive_cache_hits > 0 or start > 0 or end < 1
+        using_validation = max_consecutive_cache_hits >= 0 or start > 0 or end < 1
         if using_validation:
             model_sampling = model.get_model_object("model_sampling")
             start_sigma, end_sigma = (float(
@@ -104,7 +106,7 @@ class ApplyFBCacheOnModel:
             def validate_use_cache(use_cached):
                 nonlocal consecutive_cache_hits
                 use_cached = use_cached and end_sigma <= current_timestep <= start_sigma
-                use_cached = use_cached and (max_consecutive_cache_hits < 1
+                use_cached = use_cached and (max_consecutive_cache_hits < 0
                                              or consecutive_cache_hits
                                              < max_consecutive_cache_hits)
                 consecutive_cache_hits = consecutive_cache_hits + 1 if use_cached else 0
