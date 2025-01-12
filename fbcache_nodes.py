@@ -119,6 +119,12 @@ class ApplyFBCacheOnModel:
 
         if diffusion_model.__class__.__name__ == "UNetModel":
 
+            patch__forward = first_block_cache.create_patch_unet_model__forward(
+                diffusion_model,
+                residual_diff_threshold=residual_diff_threshold,
+                validate_can_use_cache_function=validate_use_cache,
+            )
+
             def model_unet_function_wrapper(model_function, kwargs):
                 nonlocal prev_timestep, current_timestep, consecutive_cache_hits
 
@@ -134,11 +140,7 @@ class ApplyFBCacheOnModel:
                         first_block_cache.set_current_cache_context(
                             first_block_cache.create_cache_context())
 
-                    with first_block_cache.patch_unet_model__forward(
-                            diffusion_model,
-                            residual_diff_threshold=residual_diff_threshold,
-                            validate_can_use_cache_function=validate_use_cache
-                    ):
+                    with patch__forward():
                         return model_function(input, timestep, **c)
                 except model_management.InterruptProcessingException as exc:
                     prev_timestep = None

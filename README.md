@@ -37,9 +37,13 @@ You can find demo workflows in the `workflows` folder.
 
 [LTXV with First Block Cache and Compilation](./workflows/ltxv.json)
 
+[HunyuanVideo with First Block Cache](./workflows/hunyuan_video.json)
+
 [SDXL with First Block Cache](./workflows/sdxl.json)
 
-**NOTE**: The compilation node requires your computation to meet some software and hardware requirements, please refer to the [Enhanced `torch.compile`](#enhanced-torchcompile) section for more information.
+**NOTE**: The `Compile Model+` node requires your computation to meet some software and hardware requirements, please refer to the [Enhanced `torch.compile`](#enhanced-torchcompile) section for more information.
+If you have problems with the compilation node, you can remove it from the workflow and only use the `Apply First Block Cache` node.
+The `Apply First Block Cache` node can still bring you a significant speedup.
 
 ## Dynamic Caching ([First Block Cache](https://github.com/chengzeyi/ParaAttention?tab=readme-ov-file#first-block-cache-our-dynamic-caching))
 
@@ -56,6 +60,7 @@ Some configurations for different models that you can try:
 | - | - | - |
 | `flux-dev.safetensors` with `fp8_e4m3fn_fast` | 28 | 0.12 |
 | `ltx-video-2b-v0.9.1.safetensors` | 30 | 0.1 |
+| `hunyuan_video_720_cfgdistill_fp8_e4m3fn.safetensors` | 20 | 0.1 |
 | `sd_xl_base_1.0.safetensors` | 25 | 0.2 |
 
 It supports many models like `FLUX`, `LTXV (native and non-native)`, `HunyuanVideo (native)` and `SDXL`, feel free to try it out and let us know if you have any issues!
@@ -70,6 +75,12 @@ To use the Enhanced `torch.compile`, simply add the `wavespeed->Compile Model+` 
 The compilation process happens the first time you run the workflow, and it takes quite a long time, but it will be cached for future runs.
 You can pass different `mode` values to make it runs faster, for example `max-autotune` or `max-autotune-no-cudagraphs`.
 One of the advantages of this node over the original `TorchCompileModel` node is that it works with LoRA.
+
+It is suggested to pass `--gpu-only` when launching your `ComfyUI` if you are using this node, for example, if you are using `comfy-cli`:
+
+```bash
+comfy launch -- --gpu-only --force-channels-last
+```
 
 **NOTE**: `torch.compile` might not be able to work with model offloading well, you could try passing `--gpu-only` when launching your `ComfyUI` to disable model offloading.
 

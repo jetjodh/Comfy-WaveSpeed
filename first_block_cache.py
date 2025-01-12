@@ -349,18 +349,19 @@ class CachedTransformerBlocks(torch.nn.Module):
         return hidden_states, encoder_hidden_states, hidden_states_residual, encoder_hidden_states_residual
 
 
-@contextlib.contextmanager
-def patch_unet_model__forward(model,
-                              *,
-                              residual_diff_threshold,
-                              validate_can_use_cache_function=None):
+def create_patch_unet_model__forward(model,
+                                     *,
+                                     residual_diff_threshold,
+                                     validate_can_use_cache_function=None):
     from comfy.ldm.modules.diffusionmodules.openaimodel import timestep_embedding, forward_timestep_embed, apply_control
 
     def call_remaining_blocks(self, transformer_options, control,
                               transformer_patches, hs, h, *args, **kwargs):
         original_h = h
 
-        for id, module in enumerate(self.input_blocks[2:]):
+        for id, module in enumerate(self.input_blocks):
+            if id < 2:
+                continue
             transformer_options["block"] = ("input", id)
             h = forward_timestep_embed(module, h, *args, **kwargs)
             h = apply_control(h, control, 'input')
@@ -447,7 +448,9 @@ def patch_unet_model__forward(model,
         can_use_cache = False
 
         h = x
-        for id, module in enumerate(self.input_blocks[:2]):
+        for id, module in enumerate(self.input_blocks):
+            if id >= 2:
+                break
             transformer_options["block"] = ("input", id)
             if id == 1:
                 original_h = h
@@ -515,5 +518,9 @@ def patch_unet_model__forward(model,
 
     new__forward = unet_model__forward.__get__(model)
 
-    with unittest.mock.patch.object(model, "_forward", new__forward):
-        yield
+    @contextlib.contextmanager
+    def patch__forward():
+        with unittest.mock.patch.object(model, "_forward", new__forward):
+            yield
+
+    return patch__forward
