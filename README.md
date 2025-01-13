@@ -33,13 +33,13 @@ git clone https://github.com/chengzeyi/Comfy-WaveSpeed.git
 
 You can find demo workflows in the `workflows` folder.
 
-[FLUX.1-dev with First Block Cache and Compilation](./workflows/flux.json)
-
-[LTXV with First Block Cache and Compilation](./workflows/ltxv.json)
-
-[HunyuanVideo with First Block Cache](./workflows/hunyuan_video.json)
-
-[SDXL with First Block Cache](./workflows/sdxl.json)
+| Workflow | Path |
+| - | - |
+| FLUX.1-dev with First Block Cache and Compilation | [workflows/flux.json](./workflows/flux.json)
+| FLUX.1-dev ControlNet with First Block Cache and Compilation | [workflows/flux_controlnet.json](./workflows/flux_controlnet.json)
+| LTXV with First Block Cache and Compilation | [workflows/ltxv.json](./workflows/ltxv.json)
+| HunyuanVideo with First Block Cache | [workflows/hunyuan_video.json](./workflows/hunyuan_video.json)
+| SDXL with First Block Cache | [workflows/sdxl.json](./workflows/sdxl.json)
 
 **NOTE**: The `Compile Model+` node requires your computation to meet some software and hardware requirements, please refer to the [Enhanced `torch.compile`](#enhanced-torchcompile) section for more information.
 If you have problems with the compilation node, you can remove it from the workflow and only use the `Apply First Block Cache` node.
