@@ -561,7 +561,7 @@ def create_patch_flux_forward_orig(model,
                               pe, attn_mask):
         original_hidden_states = img
 
-        for i, block in enumerate(self.double_block):
+        for i, block in enumerate(self.double_blocks):
             if i < 1:
                 continue
             if ("double_block", i) in blocks_replace:
