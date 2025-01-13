@@ -121,9 +121,11 @@ def apply_prev_hidden_states_residual(hidden_states,
 
     encoder_hidden_states_residual = get_buffer(
         "encoder_hidden_states_residual")
-    assert encoder_hidden_states_residual is not None, "encoder_hidden_states_residual must be set before"
-    encoder_hidden_states = encoder_hidden_states_residual + encoder_hidden_states
-    encoder_hidden_states = encoder_hidden_states.contiguous()
+    if encoder_hidden_states_residual is None:
+        encoder_hidden_states = None
+    else:
+        encoder_hidden_states = encoder_hidden_states_residual + encoder_hidden_states
+        encoder_hidden_states = encoder_hidden_states.contiguous()
 
     return hidden_states, encoder_hidden_states
 
@@ -294,8 +296,9 @@ class CachedTransformerBlocks(torch.nn.Module):
                 txt_arg_name=txt_arg_name,
                 **kwargs)
             set_buffer("hidden_states_residual", hidden_states_residual)
-            set_buffer("encoder_hidden_states_residual",
-                       encoder_hidden_states_residual)
+            if encoder_hidden_states_residual is not None:
+                set_buffer("encoder_hidden_states_residual",
+                           encoder_hidden_states_residual)
         torch._dynamo.graph_break()
 
         if self.return_hidden_states_only:
@@ -359,15 +362,19 @@ class CachedTransformerBlocks(torch.nn.Module):
                     dim=1)
 
         hidden_states_shape = hidden_states.shape
-        encoder_hidden_states_shape = encoder_hidden_states.shape
-
         hidden_states = hidden_states.flatten().contiguous().reshape(
             hidden_states_shape)
-        encoder_hidden_states = encoder_hidden_states.flatten().contiguous(
-        ).reshape(encoder_hidden_states_shape)
+
+        if encoder_hidden_states is not None:
+            encoder_hidden_states_shape = encoder_hidden_states.shape
+            encoder_hidden_states = encoder_hidden_states.flatten().contiguous(
+            ).reshape(encoder_hidden_states_shape)
 
         hidden_states_residual = hidden_states - original_hidden_states
-        encoder_hidden_states_residual = encoder_hidden_states - original_encoder_hidden_states
+        if encoder_hidden_states is None:
+            encoder_hidden_states_residual = None
+        else:
+            encoder_hidden_states_residual = encoder_hidden_states - original_encoder_hidden_states
         return hidden_states, encoder_hidden_states, hidden_states_residual, encoder_hidden_states_residual
 
 
@@ -557,8 +564,8 @@ def create_patch_flux_forward_orig(model,
     from torch import Tensor
     from comfy.ldm.flux.model import timestep_embedding
 
-    def call_remaining_blocks(self, blocks_replace, control, img, txt, vec,
-                              pe, attn_mask):
+    def call_remaining_blocks(self, blocks_replace, control, img, txt, vec, pe,
+                              attn_mask):
         original_hidden_states = img
 
         for i, block in enumerate(self.double_blocks):
@@ -725,7 +732,8 @@ def create_patch_flux_forward_orig(model,
                     threshold=residual_diff_threshold,
                 )
                 if validate_can_use_cache_function is not None:
-                    can_use_cache = validate_can_use_cache_function(can_use_cache)
+                    can_use_cache = validate_can_use_cache_function(
+                        can_use_cache)
                 if not can_use_cache:
                     set_buffer("first_hidden_states_residual",
                                first_hidden_states_residual)
@@ -756,7 +764,8 @@ def create_patch_flux_forward_orig(model,
 
     @contextlib.contextmanager
     def patch_forward_orig():
-        with unittest.mock.patch.object(model, "forward_orig", new_forward_orig):
+        with unittest.mock.patch.object(model, "forward_orig",
+                                        new_forward_orig):
             yield
 
     return patch_forward_orig
