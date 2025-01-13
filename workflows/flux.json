@@ -732,7 +732,7 @@
         "Node name for S&R": "UNETLoader"
       },
       "widgets_values": [
-        "flux_dev_fp8_scaled_diffusion_model.safetensors",
+        "flux1-dev.safetensors",
         "fp8_e4m3fn_fast"
       ],
       "color": "#223",
@@ -768,7 +768,7 @@
         "Node name for S&R": "DualCLIPLoader"
       },
       "widgets_values": [
-        "t5xxl_fp8_e4m3fn_scaled.safetensors",
+        "t5xxl_fp8_e4m3fn.safetensors",
         "clip_l.safetensors",
         "flux",
         "default"
