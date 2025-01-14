@@ -568,6 +568,10 @@ def create_patch_flux_forward_orig(model,
                               attn_mask, ca_idx, timesteps):
         original_hidden_states = img
 
+        extra_block_forward_kwargs = {}
+        if attn_mask is not None:
+            extra_block_forward_kwargs["attn_mask"] = attn_mask
+
         for i, block in enumerate(self.double_blocks):
             if i < 1:
                 continue
@@ -580,7 +584,7 @@ def create_patch_flux_forward_orig(model,
                         txt=args["txt"],
                         vec=args["vec"],
                         pe=args["pe"],
-                        attn_mask=args.get("attn_mask"))
+                        **extra_block_forward_kwargs)
                     return out
 
                 out = blocks_replace[("double_block",
@@ -589,7 +593,7 @@ def create_patch_flux_forward_orig(model,
                                           "txt": txt,
                                           "vec": vec,
                                           "pe": pe,
-                                          "attn_mask": attn_mask
+                                          **extra_block_forward_kwargs
                                       }, {
                                           "original_block": block_wrap
                                       })
@@ -600,7 +604,7 @@ def create_patch_flux_forward_orig(model,
                                  txt=txt,
                                  vec=vec,
                                  pe=pe,
-                                 attn_mask=attn_mask)
+                                 **extra_block_forward_kwargs)
 
             if control is not None:  # Controlnet
                 control_i = control.get("input")
@@ -630,7 +634,7 @@ def create_patch_flux_forward_orig(model,
                     out["img"] = block(args["img"],
                                        vec=args["vec"],
                                        pe=args["pe"],
-                                       attn_mask=args.get("attn_mask"))
+                                       **extra_block_forward_kwargs)
                     return out
 
                 out = blocks_replace[("single_block",
@@ -638,13 +642,13 @@ def create_patch_flux_forward_orig(model,
                                           "img": img,
                                           "vec": vec,
                                           "pe": pe,
-                                          "attn_mask": attn_mask
+                                          **extra_block_forward_kwargs
                                       }, {
                                           "original_block": block_wrap
                                       })
                 img = out["img"]
             else:
-                img = block(img, vec=vec, pe=pe, attn_mask=attn_mask)
+                img = block(img, vec=vec, pe=pe, **extra_block_forward_kwargs)
 
             if control is not None:  # Controlnet
                 control_o = control.get("output")
@@ -709,8 +713,11 @@ def create_patch_flux_forward_orig(model,
         ids = torch.cat((txt_ids, img_ids), dim=1)
         pe = self.pe_embedder(ids)
 
-        blocks_replace = patches_replace.get("dit", {})
         ca_idx = 0
+        extra_block_forward_kwargs = {}
+        if attn_mask is not None:
+            extra_block_forward_kwargs["attn_mask"] = attn_mask
+        blocks_replace = patches_replace.get("dit", {})
         for i, block in enumerate(self.double_blocks):
             if i >= 1:
                 break
@@ -723,7 +730,7 @@ def create_patch_flux_forward_orig(model,
                         txt=args["txt"],
                         vec=args["vec"],
                         pe=args["pe"],
-                        attn_mask=args.get("attn_mask"))
+                        **extra_block_forward_kwargs)
                     return out
 
                 out = blocks_replace[("double_block",
@@ -732,7 +739,7 @@ def create_patch_flux_forward_orig(model,
                                           "txt": txt,
                                           "vec": vec,
                                           "pe": pe,
-                                          "attn_mask": attn_mask
+                                          **extra_block_forward_kwargs
                                       }, {
                                           "original_block": block_wrap
                                       })
@@ -743,7 +750,7 @@ def create_patch_flux_forward_orig(model,
                                  txt=txt,
                                  vec=vec,
                                  pe=pe,
-                                 attn_mask=attn_mask)
+                                 **extra_block_forward_kwargs)
 
             if control is not None:  # Controlnet
                 control_i = control.get("input")
