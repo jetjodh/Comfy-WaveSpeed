@@ -565,7 +565,7 @@ def create_patch_flux_forward_orig(model,
     from comfy.ldm.flux.model import timestep_embedding
 
     def call_remaining_blocks(self, blocks_replace, control, img, txt, vec, pe,
-                              attn_mask):
+                              attn_mask, ca_idx, timesteps):
         original_hidden_states = img
 
         for i, block in enumerate(self.double_blocks):
@@ -609,6 +609,17 @@ def create_patch_flux_forward_orig(model,
                     if add is not None:
                         img += add
 
+            # PuLID attention
+            if getattr(self, "pulid_data", {}):
+                if i % self.pulid_double_interval == 0:
+                    # Will calculate influence of all pulid nodes at once
+                    for _, node_data in self.pulid_data.items():
+                        if torch.any((node_data['sigma_start'] >= timesteps)
+                                     & (timesteps >= node_data['sigma_end'])):
+                            img = img + node_data['weight'] * self.pulid_ca[
+                                ca_idx](node_data['embedding'], img)
+                    ca_idx += 1
+
         img = torch.cat((txt, img), 1)
 
         for i, block in enumerate(self.single_blocks):
@@ -641,6 +652,21 @@ def create_patch_flux_forward_orig(model,
                     add = control_o[i]
                     if add is not None:
                         img[:, txt.shape[1]:, ...] += add
+
+            # PuLID attention
+            if getattr(self, "pulid_data", {}):
+                real_img, txt = img[:, txt.shape[1]:,
+                                    ...], img[:, :txt.shape[1], ...]
+                if i % self.pulid_single_interval == 0:
+                    # Will calculate influence of all nodes at once
+                    for _, node_data in self.pulid_data.items():
+                        if torch.any((node_data['sigma_start'] >= timesteps)
+                                     & (timesteps >= node_data['sigma_end'])):
+                            real_img = real_img + node_data[
+                                'weight'] * self.pulid_ca[ca_idx](
+                                    node_data['embedding'], real_img)
+                    ca_idx += 1
+                img = torch.cat((txt, real_img), 1)
 
         img = img[:, txt.shape[1]:, ...]
 
@@ -684,6 +710,7 @@ def create_patch_flux_forward_orig(model,
         pe = self.pe_embedder(ids)
 
         blocks_replace = patches_replace.get("dit", {})
+        ca_idx = 0
         for i, block in enumerate(self.double_blocks):
             if i >= 1:
                 break
@@ -725,6 +752,17 @@ def create_patch_flux_forward_orig(model,
                     if add is not None:
                         img += add
 
+            # PuLID attention
+            if getattr(self, "pulid_data", {}):
+                if i % self.pulid_double_interval == 0:
+                    # Will calculate influence of all pulid nodes at once
+                    for _, node_data in self.pulid_data.items():
+                        if torch.any((node_data['sigma_start'] >= timesteps)
+                                     & (timesteps >= node_data['sigma_end'])):
+                            img = img + node_data['weight'] * self.pulid_ca[
+                                ca_idx](node_data['embedding'], img)
+                    ca_idx += 1
+
             if i == 0:
                 first_hidden_states_residual = img
                 can_use_cache = get_can_use_cache(
@@ -752,6 +790,8 @@ def create_patch_flux_forward_orig(model,
                 vec,
                 pe,
                 attn_mask,
+                ca_idx,
+                timesteps,
             )
             set_buffer("hidden_states_residual", hidden_states_residual)
         torch._dynamo.graph_break()
