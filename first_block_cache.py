@@ -565,7 +565,7 @@ def create_patch_flux_forward_orig(model,
     from comfy.ldm.flux.model import timestep_embedding
 
     def call_remaining_blocks(self, blocks_replace, control, img, txt, vec, pe,
-                              attn_mask, ca_idx, timesteps):
+                              attn_mask, ca_idx, timesteps, transformer_options):
         original_hidden_states = img
 
         extra_block_forward_kwargs = {}
@@ -595,7 +595,8 @@ def create_patch_flux_forward_orig(model,
                                           "pe": pe,
                                           **extra_block_forward_kwargs
                                       }, {
-                                          "original_block": block_wrap
+                                          "original_block": block_wrap,
+                                          "transformer_options": transformer_options
                                       })
                 txt = out["txt"]
                 img = out["img"]
@@ -644,7 +645,8 @@ def create_patch_flux_forward_orig(model,
                                           "pe": pe,
                                           **extra_block_forward_kwargs
                                       }, {
-                                          "original_block": block_wrap
+                                          "original_block": block_wrap,
+                                          "transformer_options": transformer_options
                                       })
                 img = out["img"]
             else:
@@ -741,7 +743,8 @@ def create_patch_flux_forward_orig(model,
                                           "pe": pe,
                                           **extra_block_forward_kwargs
                                       }, {
-                                          "original_block": block_wrap
+                                          "original_block": block_wrap,
+                                          "transformer_options": transformer_options
                                       })
                 txt = out["txt"]
                 img = out["img"]
@@ -799,6 +802,7 @@ def create_patch_flux_forward_orig(model,
                 attn_mask,
                 ca_idx,
                 timesteps,
+                transformer_options,
             )
             set_buffer("hidden_states_residual", hidden_states_residual)
         torch._dynamo.graph_break()
