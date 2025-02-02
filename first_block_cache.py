@@ -384,14 +384,13 @@ class CachedTransformerBlocks(torch.nn.Module):
                     ],
                     dim=1)
 
-        hidden_states_shape = hidden_states.shape
-        hidden_states = hidden_states.flatten().contiguous().reshape(
-            hidden_states_shape)
-
-        if encoder_hidden_states is not None:
-            encoder_hidden_states_shape = encoder_hidden_states.shape
-            encoder_hidden_states = encoder_hidden_states.flatten().contiguous(
-            ).reshape(encoder_hidden_states_shape)
+        # hidden_states_shape = hidden_states.shape
+        # hidden_states = hidden_states.flatten().contiguous().reshape(
+        #     hidden_states_shape)
+        # if encoder_hidden_states is not None:
+        #     encoder_hidden_states_shape = encoder_hidden_states.shape
+        #     encoder_hidden_states = encoder_hidden_states.flatten().contiguous(
+        #     ).reshape(encoder_hidden_states_shape)
 
         hidden_states_residual = hidden_states - original_hidden_states
         if encoder_hidden_states is None:
