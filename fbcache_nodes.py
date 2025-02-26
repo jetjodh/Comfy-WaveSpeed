@@ -169,13 +169,16 @@ class ApplyFBCacheOnModel:
 
         model = model.clone()
         diffusion_model = model.get_model_object(object_to_patch)
+        print(diffusion_model.__class__.__name__)
 
-        if diffusion_model.__class__.__name__ in ("UNetModel", "Flux"):
+        if diffusion_model.__class__.__name__ in ("UNetModel", "Flux", "SD3"):
 
             if diffusion_model.__class__.__name__ == "UNetModel":
                 create_patch_function = first_block_cache.create_patch_unet_model__forward
             elif diffusion_model.__class__.__name__ == "Flux":
                 create_patch_function = first_block_cache.create_patch_flux_forward_orig
+            elif "SD3" in diffusion_model.__class__.__name__:
+                create_patch_function = first_block_cache.create_patch_sd35_forward_orig
             else:
                 raise ValueError(
                     f"Unsupported model {diffusion_model.__class__.__name__}")
