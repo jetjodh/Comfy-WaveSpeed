@@ -888,8 +888,9 @@ def create_patch_sd35_forward_orig(model,
     def forward_sd35(
         self,
         hidden_states,
-        context,
-        timestep,
+        timestep,     # Changed parameter order
+        *,            # Make all remaining parameters keyword-only
+        context=None,
         control=None,
         transformer_options={},
         **kwargs
