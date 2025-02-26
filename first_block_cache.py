@@ -840,3 +840,147 @@ def create_patch_flux_forward_orig(model,
             yield
 
     return patch_forward_orig
+
+
+# Based on the pattern in create_patch_flux_forward_orig
+def create_patch_sd35_forward_orig(model,
+                                 *,
+                                 residual_diff_threshold,
+                                 validate_can_use_cache_function=None):
+    from torch import Tensor
+    import torch
+    import unittest.mock
+    import contextlib
+
+    def call_remaining_blocks(self, hidden_states, context, timesteps, transformer_options, control=None, **kwargs):
+        original_hidden_states = hidden_states
+
+        # Process the remaining transformer blocks (skip the first one as it's already processed)
+        for i, block in enumerate(self.transformer_blocks):
+            if i < 1:  # Skip the first block
+                continue
+
+            # Apply the transformer block with appropriate parameters
+            block_output = block(
+                hidden_states=hidden_states,
+                context=context,
+                timestep=timesteps,
+                **kwargs
+            )
+
+            # Handle outputs based on the block structure (SD 3.5 blocks might return multiple values)
+            if isinstance(block_output, tuple):
+                hidden_states = block_output[0]
+            else:
+                hidden_states = block_output
+
+            # Apply controlnet if available
+            if control is not None and "middle" in control:
+                if i < len(control["middle"]):
+                    control_signal = control["middle"][i]
+                    if control_signal is not None:
+                        hidden_states = hidden_states + control_signal
+
+        # Calculate the residual for caching
+        hidden_states_residual = hidden_states - original_hidden_states
+        return hidden_states, hidden_states_residual
+
+    def forward_sd35(
+        self,
+        hidden_states,
+        context,
+        timestep,
+        control=None,
+        transformer_options={},
+        **kwargs
+    ):
+        # Extract any patches or replacements from transformer options
+        patches_replace = transformer_options.get("patches_replace", {})
+ 
+        # Only process the first transformer block initially
+        if len(self.transformer_blocks) > 0:
+            original_hidden_states = hidden_states
+
+            # Process the first transformer block
+            first_block = self.transformer_blocks[0]
+            block_output = first_block(
+                hidden_states=hidden_states,
+                context=context,
+                timestep=timestep,
+                **kwargs
+            )
+
+            # Handle outputs based on block structure
+            if isinstance(block_output, tuple):
+                hidden_states = block_output[0]
+            else:
+                hidden_states = block_output
+
+            # Apply controlnet for the first block if available
+            if control is not None and "middle" in control:
+                if len(control["middle"]) > 0:
+                    control_signal = control["middle"][0]
+                    if control_signal is not None:
+                        hidden_states = hidden_states + control_signal
+
+            # Calculate the first hidden states residual for cache comparison
+            first_hidden_states_residual = hidden_states - original_hidden_states
+
+            # Check if we can use the cache
+            can_use_cache = get_can_use_cache(
+                first_hidden_states_residual,
+                threshold=residual_diff_threshold,
+                validation_function=validate_can_use_cache_function,
+            )
+
+            if not can_use_cache:
+                set_buffer("first_hidden_states_residual", first_hidden_states_residual)
+
+            # Clean up to save memory
+            del first_hidden_states_residual
+
+            # Break the computation graph for better memory management
+            torch._dynamo.graph_break()
+
+            if can_use_cache:
+                # Apply the cached residual to skip processing remaining blocks
+                hidden_states = apply_prev_hidden_states_residual(hidden_states)
+            else:
+                # Process the remaining blocks and cache the result
+                hidden_states, hidden_states_residual = call_remaining_blocks(
+                    self,
+                    hidden_states,
+                    context,
+                    timestep,
+                    transformer_options,
+                    control=control,
+                    **kwargs
+                )
+                set_buffer("hidden_states_residual", hidden_states_residual)
+
+            # Break the computation graph again
+            torch._dynamo.graph_break()
+
+        # Apply final processing if needed (SD 3.5 might have specific output processing)
+        # This depends on the SD 3.5 implementation
+        if hasattr(self, "final_layer") and callable(self.final_layer):
+            hidden_states = self.final_layer(hidden_states)
+
+        return hidden_states
+
+    # Bind the method to the model instance
+    new_forward = forward_sd35.__get__(model)
+
+    # Create a context manager for the patch
+    @contextlib.contextmanager
+    def patch_forward():
+        # Determine which method to patch based on the model structure
+        # SD 3.5 might use 'forward' or a different method name
+        target_method = "forward"
+        if hasattr(model, "forward_orig"):
+            target_method = "forward_orig"
+
+        with unittest.mock.patch.object(model, target_method, new_forward):
+            yield
+
+    return patch_forward
